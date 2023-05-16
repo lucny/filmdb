@@ -1,3 +1,6 @@
 from django.contrib import admin
+# Import modelů ze souboru models.py
+from .models import Genre
 
-# Register your models here.
+# Registrace nového modelu v administraci
+admin.site.register(Genre)
