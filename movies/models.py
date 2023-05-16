@@ -1,5 +1,6 @@
 # Import knihovny models (součást balíčku django.db), která obsahuje programové prostředky
 # pro vytváření modelů
+from django.core.validators import MinValueValidator
 from django.db import models
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -51,3 +52,57 @@ class Genre(models.Model):
         Atribut self ukazuje na "sám" objekt (obdoba this v jiných jazycích).
         '''
         return self.name
+
+
+class Film(models.Model):
+    '''
+    Třída Film je modelem pro databázový objekt (tabulku), který bude obsahovat základní údaje o filmech
+    '''
+    # Fields
+    # Znakové pole o maximální délce 200 znaků pro vložení názvu filmu
+    title = models.CharField(max_length=200,
+                             verbose_name='Název filmu',
+                             help_text='Zadejte název filmu')
+    # Textové pole pro vložení delšího textu popisujícího děj filmu
+    # Formulářový prvek nemusí je nepovinný - atribut null=True
+    # a textové pole nemusí být vyplněno - atribut blank=True
+    plot = models.TextField(null=True,
+                            blank=True,
+                            verbose_name='Děj')
+    # Pole obsahuje datum uvedení filmu, které musí být zadáno v náležitém tvaru (YYYY-MM-DD); nepovinný údaj
+    release_date = models.DateField(null=True,
+                                    blank=True,
+                                    verbose_name='Datum uvedení',
+                                    help_text='Zadejte, prosím, datum ve formátu: <em>den.měsíc.rok</em>')
+    # Celočíselné pole pro nepovinné zadání stopáže (délky) filmu v minutách
+    runtime = models.PositiveSmallIntegerField(null=True,
+                                  blank=True,
+                                  verbose_name='Délka filmu',
+                                  help_text='Prosím, zadejte celočíselný údaj vyjadřující délku filmu v minutách')
+    # Pole pro zadání desetinného čísla pro hodnocení filmu v rozsahu 0.0 až 10.0
+    # Výchozí hodnota je nastavena na 5.0
+    # K validaci hodnot jsou použity metody z balíku/knihovny django.core.validators
+    rating = models.FloatField(default=5.0,
+                             null=True,
+                             verbose_name='Hodnocení',
+                             help_text='Zadejte desetinné číslo v rozsahu 0.0 až 10.0')
+    # Vytvoří vztah mezi modely Film a Genre typu M:N
+    genres = models.ManyToManyField(Genre,
+                                    verbose_name='Žánry',
+                                    help_text='K označení většího počtu žánrů můžete stisknout klávesu CTRL')
+
+    # Metadata
+    class Meta:
+        verbose_name = 'Film'
+        verbose_name_plural = 'Filmy'
+        # Záznamy budou řazeny primárně sestupně (znaménko mínus) podle data uvedení,
+        # sekundárně vzestupně podle názvu
+        ordering = ['-release_date', 'title']
+
+    # Methods
+    def __str__(self):
+        '''
+        Součástí textové reprezentace filmu bude jeho název, rok uvedení a hodnocení
+        '''
+        return f'{self.title} ({str(self.release_date.year)}), hodnocení: {str(self.rating)}'
+
