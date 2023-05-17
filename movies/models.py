@@ -1,7 +1,8 @@
 # Import knihovny models (součást balíčku django.db), která obsahuje programové prostředky
 # pro vytváření modelů
-from django.core.validators import MinValueValidator
 from django.db import models
+# Import vestavěného modulu os, který obsahuje různé utility pro práci s daným OS
+import os
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Modely-třídy, které tvoří datovou strukturu aplikace
@@ -106,3 +107,58 @@ class Film(models.Model):
         '''
         return f'{self.title} ({str(self.release_date.year)}), hodnocení: {str(self.rating)}'
 
+
+class Attachment(models.Model):
+    '''
+    Třída Attachment je modelem pro databázový objekt (tabulku), který bude obsahovat údaje o přílohách filmů
+    '''
+    # Fields
+    # Povinný titulek přílohy - text do délky 200 znaků
+    title = models.CharField(max_length=200,
+                             verbose_name='Titulek přílohy',
+                             help_text='Doplňte stručný popis přílohy (do 200 znaků)')
+    # Časový údaj o poslední aktualizaci přílohy - automaticky se ukládá aktuální čas
+    last_update = models.DateTimeField(auto_now=True)
+    # Pole pro upload souboru
+    def attachment_path(self, filename):
+        ''' Pomocná metoda, která zajistí uložení přílohy do složky attachments a podsložky označené podle id filmu '''
+        return os.path.join('attachments', str(self.film.id), filename)
+
+    # Parametr upload_to zajistí uložení souboru do složky specifikované v návratové hodnotě metody attachment_path
+    file = models.FileField(upload_to=attachment_path,
+                            null=True,
+                            verbose_name='Příloha',
+                            help_text='Vložte soubor s požadovanou přílohou')
+    # Konstanta, v níž jsou ve formě n-tic (tuples) předdefinovány různé typy příloh
+    TYPE_OF_ATTACHMENT = (
+        ('audio', 'audio'),
+        ('obrázek', 'obrázek'),
+        ('text', 'text'),
+        ('video', 'video'),
+        ('jiná', 'jiná'),
+    )
+    # Pole s definovanými předvolbami pro uložení typu přílohy
+    type = models.CharField(max_length=10,
+                            choices=TYPE_OF_ATTACHMENT,
+                            blank=True,
+                            default='obrázek',
+                            verbose_name='Typ přílohy',
+                            help_text='Vyberte některý z uvedených typů příloh')
+    # Cizí klíč, který zajišťuje propojení přílohy s daným filmem (vztah N:1)
+    # Parametr on_delete slouží k zajištění tzv. referenční integrity - v případě odstranění filmu
+    # budou odstraněny i všechny jeho přílohy (models.CASCADE)
+    film = models.ForeignKey(Film,
+                             on_delete=models.CASCADE,
+                             verbose_name='Film',
+                             help_text='Vyberte film, s nímž má být příloha spojena')
+    # Metadata
+    class Meta:
+        verbose_name = 'Příloha'
+        verbose_name_plural = 'Přílohy'
+        # Primárně seřazeno podle poslední aktualizace souborů, sekundárně podle typu přílohy
+        ordering = ['-last_update', 'type']
+
+    # Methods
+    def __str__(self):
+        ''' Textová reprezentace objektu '''
+        return f'{self.title} ({self.type})'
