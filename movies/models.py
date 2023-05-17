@@ -87,6 +87,12 @@ class Film(models.Model):
                              null=True,
                              verbose_name='Hodnocení',
                              help_text='Zadejte desetinné číslo v rozsahu 0.0 až 10.0')
+    # Pole typu image, které umožňuje upload obrázku s plakátem filmu
+    poster = models.ImageField(upload_to='posters',
+                               blank=True,
+                               null=True,
+                               verbose_name='Plakát k filmu',
+                               help_text='Zde můžete přiložit grafický soubor s filmovým plakátem')
     # Vytvoří vztah mezi modely Film a Genre typu M:N
     genres = models.ManyToManyField(Genre,
                                     verbose_name='Žánry',
